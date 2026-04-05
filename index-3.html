@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trainingsplan">
+<title>Trainingsplan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #c8f060;
+    --accent-dim: rgba(200,240,96,0.12);
+    --blue: #60b4f0;
+    --blue-dim: rgba(96,180,240,0.12);
+    --orange: #f0a060;
+    --orange-dim: rgba(240,160,96,0.12);
+    --red: #f06060;
+    --red-dim: rgba(240,96,96,0.15);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  html { background: var(--bg); }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* HEADER */
+  header {
+    padding: 52px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header h1 { font-size: 26px; font-weight: 600; line-height: 1.2; }
+  header p { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+  /* STATS */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat { background: var(--surface); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 17px; font-weight: 500; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* TIMER WIDGET */
+  .timer-widget {
+    margin: 16px 20px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .timer-top {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .timer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .timer-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .timer-total {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .timer-total span {
+    color: var(--accent);
+  }
+
+  .timer-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .timer-big {
+    font-family: 'DM Mono', monospace;
+    font-size: 52px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+
+  .timer-big.warning { color: var(--orange); }
+  .timer-big.urgent { color: var(--red); }
+  .timer-big.transition { color: var(--blue); }
+
+  .timer-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  .timer-phase {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .timer-phase strong { color: var(--text); font-weight: 500; }
+
+  /* progress bar */
+  .progress-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.5s linear;
+    width: 0%;
+  }
+
+  /* controls */
+  .timer-controls {
+    display: flex;
+    gap: 0;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 14px 10px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:active { background: rgba(255,255,255,0.06); }
+  .btn.primary { color: var(--accent); }
+  .btn.danger { color: var(--red); }
+
+  /* round / exercise info */
+  .timer-info {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+  }
+
+  .info-block { flex: 1; }
+  .info-label { font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .info-val { font-size: 14px; font-weight: 500; color: var(--text); }
+  .info-val small { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  /* SECTION */
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 18px 20px 10px;
+  }
+
+  /* EXERCISES */
+  .exercises { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+
+  .ex {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .ex.open { border-color: rgba(200,240,96,0.25); }
+  .ex.active-ex { border-color: var(--accent); }
+
+  .ex-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .ex-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .ex.active-ex .ex-num { background: var(--accent); color: #0f0f0f; }
+
+  .ex-info { flex: 1; min-width: 0; }
+  .ex-name { font-size: 14px; font-weight: 600; }
+  .ex-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+  .ex-sets { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); }
+
+  .tag { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; }
+  .tag-core { background: var(--blue-dim); color: var(--blue); }
+  .tag-lauf { background: var(--accent-dim); color: var(--accent); }
+  .tag-hueft { background: rgba(255,255,255,0.07); color: #aaa; }
+  .tag-mobil { background: var(--orange-dim); color: var(--orange); }
+
+  .chevron { width: 16px; height: 16px; color: var(--muted); transition: transform 0.25s ease; flex-shrink: 0; }
+  .ex.open .chevron { transform: rotate(180deg); }
+
+  .ex-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+  .ex.open .ex-body { display: block; }
+
+  .muscle-line { font-size: 12px; color: var(--muted); padding: 9px 0 10px; }
+  .block-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+
+  .steps { list-style: none; }
+  .steps li { font-size: 12px; line-height: 1.55; color: var(--text); padding: 5px 0 5px 18px; position: relative; border-bottom: 1px solid var(--border); }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before { content: attr(data-n); position: absolute; left: 0; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); top: 6px; }
+
+  .note { font-size: 11px; margin-top: 9px; padding: 7px 10px; border-radius: var(--radius-sm); line-height: 1.5; }
+  .note-warn { background: rgba(240,160,96,0.1); color: var(--orange); }
+  .note-tip { background: rgba(255,255,255,0.05); color: #aaa; }
+
+  /* ABLAUF */
+  .ablauf { margin: 0 20px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px 16px; }
+  .ablauf-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .ablauf-row:last-child { border-bottom: none; }
+  .ablauf-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .ablauf-name { font-weight: 500; flex: 1; }
+  .ablauf-detail { font-size: 12px; color: var(--muted); }
+
+  footer { text-align: center; padding: 28px 20px 0; font-size: 12px; color: rgba(255,255,255,0.15); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">Trainingsplan</div>
+  <h1>Krafttraining</h1>
+  <p>Für Läufer</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val">30'</div><div class="stat-label">pro Einheit</div></div>
+  <div class="stat"><div class="stat-val">2–3×</div><div class="stat-label">pro Woche</div></div>
+  <div class="stat"><div class="stat-val">3 Rdn</div><div class="stat-label">Circuit</div></div>
+</div>
+
+<!-- TIMER -->
+<div class="timer-widget">
+  <div class="timer-top">
+    <div class="timer-row">
+      <div class="timer-label">Timer</div>
+      <div class="timer-total">Gesamt: <span id="total-elapsed">00:00</span></div>
+    </div>
+    <div class="timer-main">
+      <div class="timer-big" id="timer-display">00:00</div>
+    </div>
+    <div class="timer-phase" id="timer-phase"><strong>Bereit</strong> — Starte wenn du bereit bist</div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <div class="timer-controls">
+    <button class="btn primary" id="btn-startstop" onclick="startStop()">▶ Start</button>
+    <button class="btn" onclick="nextPhase()">Weiter ›</button>
+    <button class="btn danger" onclick="resetTimer()">Reset</button>
+  </div>
+
+  <div class="timer-info">
+    <div class="info-block">
+      <div class="info-label">Übung</div>
+      <div class="info-val" id="info-ex">—</div>
+    </div>
+    <div class="info-block">
+      <div class="info-label">Runde</div>
+      <div class="info-val" id="info-round">—</div>
+    </div>
+    <div class="info-block">
+      <div class="info-label">Phase</div>
+      <div class="info-val" id="info-phase">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Übungen — Tippen zum Öffnen</div>
+
+<div class="exercises">
+
+  <div class="ex" id="ex-0" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">1</div>
+      <div class="ex-info">
+        <div class="ex-name">Plank</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 30–45 Sek</span><span class="tag tag-core">Core</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Rumpf, Schultern, Rücken</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Unterarme auf der Matte, Ellbogen unter den Schultern, Zehen aufgestellt.</li>
+        <li data-n="2">Körper gerade vom Kopf bis zu den Fersen, Bauch aktiv anspannen.</li>
+        <li data-n="3">Ruhig atmen, Position halten.</li>
+      </ul>
+      <div class="note note-warn">Hüfte weder hochziehen noch durchhängen lassen.</div>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-1" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">2</div>
+      <div class="ex-info">
+        <div class="ex-name">Seitstütz</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 25–30 Sek je Seite</span><span class="tag tag-core">Core</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Seitlicher Rumpf, Hüftstabilität</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Seitlage, Unterarm auf dem Boden, Ellbogen unter der Schulter.</li>
+        <li data-n="2">Hüfte anheben bis Körper eine gerade seitliche Linie bildet.</li>
+        <li data-n="3">Freie Hand an die Hüfte oder zur Decke, Position halten.</li>
+      </ul>
+      <div class="note note-tip">Hüfte aktiv hochhalten, nicht durchhängen lassen.</div>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-2" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">3</div>
+      <div class="ex-info">
+        <div class="ex-name">Glute Bridge</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 15</span><span class="tag tag-hueft">Hüfte & Gesäß</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Gesäß, hintere Oberschenkel, Becken</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Rückenlage, Knie angewinkelt, Füße hüftbreit flach auf dem Boden.</li>
+        <li data-n="2">Hüfte nach oben drücken bis Körper eine Linie bildet, 2 Sek halten.</li>
+        <li data-n="3">Kontrolliert absenken ohne den Boden zu berühren.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-3" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">4</div>
+      <div class="ex-info">
+        <div class="ex-name">Seitliches Beinheben</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 12 je Seite</span><span class="tag tag-hueft">Hüftstabilität</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Gluteus medius, äußere Hüfte</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Seitlage, Körper gestreckt, Beine übereinander.</li>
+        <li data-n="2">Oberes Bein langsam anheben, ohne Schwung oder Hüftdrehung.</li>
+        <li data-n="3">Kurz halten, langsam absenken. 2 Sek hoch, 1 halten, 2 runter.</li>
+      </ul>
+      <div class="note note-tip">Verhindert das Einknicken des Knies beim Laufen.</div>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-4" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">5</div>
+      <div class="ex-info">
+        <div class="ex-name">Ausfallschritte</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 10 je Seite</span><span class="tag tag-lauf">Laufspezifisch</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Quads, Gesäß, Hüftbeuger</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Aufrechter Stand, einen großen Schritt nach vorne.</li>
+        <li data-n="2">Beide Knie beugen, hinteres Knie sinkt knapp über den Boden.</li>
+        <li data-n="3">Über die Ferse des vorderen Fußes zurück in den Stand drücken.</li>
+      </ul>
+      <div class="note note-warn">Vorderes Knie nicht über die Fußspitze hinausschieben.</div>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-5" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">6</div>
+      <div class="ex-info">
+        <div class="ex-name">Kniebeuge</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 12</span><span class="tag tag-lauf">Laufspezifisch</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Quads, Gesäß, gesamte Beinmuskulatur</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Schulterbreiter Stand, Füße leicht nach außen, Arme nach vorne gestreckt.</li>
+        <li data-n="2">Hüfte nach hinten unten senken, Fersen am Boden, Oberschenkel parallel.</li>
+        <li data-n="3">Über die Fersen zurückdrücken. 2 Sek runter, 1 Sek hoch.</li>
+      </ul>
+      <div class="note note-warn">Knie zeigen immer in Richtung der Zehenspitzen.</div>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-6" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">7</div>
+      <div class="ex-info">
+        <div class="ex-name">Calf Raise (einbeinig)</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 15 je Seite</span><span class="tag tag-lauf">Laufspezifisch</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Wade, Achillessehne, Fußgewölbe</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Auf einem Bein stehen, optional Hand leicht an der Wand.</li>
+        <li data-n="2">Ferse so hoch wie möglich anheben, 1 Sek halten.</li>
+        <li data-n="3">Ferse sehr langsam senken — 3–4 Sek. Kurz aufsetzen, wiederholen.</li>
+      </ul>
+      <div class="note note-warn">Das langsame Senken schützt die Achillessehne.</div>
+    </div>
+  </div>
+
+  <div class="ex" id="ex-7" onclick="toggle(this)">
+    <div class="ex-header">
+      <div class="ex-num">8</div>
+      <div class="ex-info">
+        <div class="ex-name">Hüftbeuger-Dehnung</div>
+        <div class="ex-meta"><span class="ex-sets">3 × 30 Sek je Seite</span><span class="tag tag-mobil">Mobilisation</span></div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="ex-body">
+      <div class="muscle-line">Hüftbeuger, Leiste, Laufhaltung</div>
+      <div class="block-label">Ausführung</div>
+      <ul class="steps">
+        <li data-n="1">Ein Knie auf der Matte, anderer Fuß vorne flach auf dem Boden.</li>
+        <li data-n="2">Hüfte nach vorne schieben bis Dehnung am hinteren Hüftbeuger spürbar.</li>
+        <li data-n="3">Arm der hinteren Seite zur Decke, Oberkörper leicht drehen. 30 Sek halten.</li>
+      </ul>
+      <div class="note note-tip">Verkürzte Hüftbeuger verschlechtern direkt den Laufstil.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section-title">Ablauf</div>
+<div class="ablauf">
+  <div class="ablauf-row"><div class="ablauf-dot"></div><div class="ablauf-name">Aufwärmen</div><div class="ablauf-detail">5 min — Hüftkreise, Beinschwünge</div></div>
+  <div class="ablauf-row"><div class="ablauf-dot"></div><div class="ablauf-name">Runde 1–3</div><div class="ablauf-detail">Alle 8 Übungen nacheinander</div></div>
+  <div class="ablauf-row"><div class="ablauf-dot"></div><div class="ablauf-name">Pause</div><div class="ablauf-detail">90 Sek nach jeder Runde</div></div>
+  <div class="ablauf-row"><div class="ablauf-dot"></div><div class="ablauf-name">Kraft nach Lauf</div><div class="ablauf-detail">Immer erst laufen, dann Kraft</div></div>
+</div>
+
+<footer>Trainingsplan · Krafttraining</footer>
+
+<script>
+// ─── Trainingsplan-Sequenz ───────────────────────────────────────────────────
+// Jede Phase: { label, exIndex (-1 = kein Highlight), duration (Sek), type }
+// type: 'exercise' | 'pause' | 'done'
+
+const EXERCISES = [
+  { name: 'Plank', sets: '3 × 40 Sek' },
+  { name: 'Seitstütz', sets: '3 × 30 Sek je Seite' },
+  { name: 'Glute Bridge', sets: '3 × 15 Wdh (~40 Sek)' },
+  { name: 'Seitl. Beinheben', sets: '3 × 12 je Seite (~50 Sek)' },
+  { name: 'Ausfallschritte', sets: '3 × 10 je Seite (~50 Sek)' },
+  { name: 'Kniebeuge', sets: '3 × 12 (~40 Sek)' },
+  { name: 'Calf Raise', sets: '3 × 15 je Seite (~50 Sek)' },
+  { name: 'Hüftbeuger', sets: '3 × 30 Sek je Seite' },
+];
+
+// Übungsdauern in Sekunden (geschätzt inkl. Seitenwechsel)
+const EX_DURATIONS = [40, 60, 40, 50, 50, 40, 50, 60];
+const ROUNDS = 3;
+const PAUSE_DURATION = 90;
+const TRANSITION_DURATION = 5; // Sekunden Pause zwischen Übungen
+
+function buildSequence() {
+  const seq = [];
+  for (let r = 0; r < ROUNDS; r++) {
+    for (let e = 0; e < EXERCISES.length; e++) {
+      seq.push({
+        label: EXERCISES[e].name,
+        exIndex: e,
+        duration: EX_DURATIONS[e],
+        round: r + 1,
+        type: 'exercise',
+        phaseLabel: `Übung ${e + 1} / 8`
+      });
+      // Kleine Übergangspause nach jeder Übung (außer der letzten in der letzten Runde)
+      const isLastExInLastRound = (r === ROUNDS - 1) && (e === EXERCISES.length - 1);
+      const isLastExInRound = e === EXERCISES.length - 1;
+      if (!isLastExInLastRound) {
+        const nextLabel = isLastExInRound
+          ? 'Rundenpause'
+          : `Bereit: ${EXERCISES[e + 1].name}`;
+        seq.push({
+          label: nextLabel,
+          exIndex: isLastExInRound ? -1 : e + 1,
+          duration: TRANSITION_DURATION,
+          round: r + 1,
+          type: 'transition',
+          phaseLabel: 'Übergang'
+        });
+      }
+    }
+    if (r < ROUNDS - 1) {
+      seq.push({
+        label: 'Pause',
+        exIndex: -1,
+        duration: PAUSE_DURATION,
+        round: r + 1,
+        type: 'pause',
+        phaseLabel: 'Pause'
+      });
+    }
+  }
+  seq.push({ label: 'Fertig!', exIndex: -1, duration: 0, round: ROUNDS, type: 'done', phaseLabel: 'Geschafft' });
+  return seq;
+}
+
+// ─── Sound / Piep-Töne ───────────────────────────────────────────────────────
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function beep(freq, duration, volume = 0.4, type = 'sine', delay = 0) {
+  try {
+    const ctx = getAudioCtx();
+    const play = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + duration + 0.05);
+    };
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(play);
+    } else {
+      play();
+    }
+  } catch(e) {}
+}
+
+// Ende einer Übung: langer tiefer Ton
+function soundEnd() {
+  beep(440, 0.6, 0.5, 'sine');
+}
+
+// Start einer neuen Übung: drei kurze aufsteigende Pieps
+function soundStart() {
+  beep(523, 0.12, 0.4, 'sine', 0.0);
+  beep(659, 0.12, 0.4, 'sine', 0.15);
+  beep(784, 0.18, 0.5, 'sine', 0.30);
+}
+
+const sequence = buildSequence();
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let state = {
+  running: false,
+  phaseIdx: 0,
+  phaseRemaining: sequence[0].duration,
+  totalElapsed: 0,
+  interval: null,
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function fmt(secs) {
+  const m = Math.floor(secs / 60).toString().padStart(2, '0');
+  const s = (secs % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function highlightExercise(idx) {
+  document.querySelectorAll('.ex').forEach((el, i) => {
+    el.classList.toggle('active-ex', i === idx);
+  });
+}
+
+function updateUI() {
+  const phase = sequence[state.phaseIdx];
+  const display = document.getElementById('timer-display');
+  const fill = document.getElementById('progress-fill');
+
+  // Timer display
+  display.textContent = fmt(state.phaseRemaining);
+
+  // Color warning
+  display.classList.remove('warning', 'urgent', 'transition');
+  if (phase.type === 'transition') {
+    display.classList.add('transition');
+  } else if (phase.type === 'exercise' || phase.type === 'pause') {
+    const pct = state.phaseRemaining / phase.duration;
+    if (pct <= 0.15) display.classList.add('urgent');
+    else if (pct <= 0.3) display.classList.add('warning');
+  }
+
+  // Progress bar
+  if (phase.duration > 0) {
+    const pct = ((phase.duration - state.phaseRemaining) / phase.duration) * 100;
+    fill.style.width = pct + '%';
+  } else {
+    fill.style.width = '100%';
+  }
+
+  // Phase text
+  const phaseText = document.getElementById('timer-phase');
+  if (phase.type === 'done') {
+    phaseText.innerHTML = '<strong>🎉 Fertig!</strong> Gute Arbeit!';
+    display.textContent = '00:00';
+  } else if (phase.type === 'pause') {
+    phaseText.innerHTML = `<strong>Pause</strong> — Nächste Runde: Runde ${phase.round + 1}`;
+  } else if (phase.type === 'transition') {
+    phaseText.innerHTML = `<strong>⏭ ${phase.label}</strong> — Kurze Pause`;
+  } else {
+    phaseText.innerHTML = `<strong>${phase.label}</strong> — Runde ${phase.round} von ${ROUNDS}`;
+  }
+
+  // Info row
+  document.getElementById('info-ex').textContent =
+    phase.type === 'exercise' ? phase.label :
+    phase.type === 'transition' ? '→ ' + phase.label :
+    phase.type === 'pause' ? '—' : '✓';
+  document.getElementById('info-round').innerHTML = `${phase.round} <small>/ ${ROUNDS}</small>`;
+  document.getElementById('info-phase').textContent = phase.phaseLabel;
+
+  // Total
+  document.getElementById('total-elapsed').textContent = fmt(state.totalElapsed);
+
+  // Highlight
+  highlightExercise(phase.exIndex);
+}
+
+// ─── Timer Logic ─────────────────────────────────────────────────────────────
+function tick() {
+  const phase = sequence[state.phaseIdx];
+
+  if (phase.type === 'done') {
+    pause();
+    updateUI();
+    return;
+  }
+
+  state.totalElapsed++;
+  state.phaseRemaining--;
+
+  if (state.phaseRemaining <= 0) {
+    // Play end sound when an exercise or pause finishes
+    if (phase.type === 'exercise' || phase.type === 'pause') {
+      soundEnd();
+    }
+    // Auto-advance
+    if (state.phaseIdx < sequence.length - 1) {
+      state.phaseIdx++;
+      state.phaseRemaining = sequence[state.phaseIdx].duration;
+      const nextPhaseType = sequence[state.phaseIdx].type;
+      // Play start sound when a new exercise begins
+      if (nextPhaseType === 'exercise') {
+        soundStart();
+      }
+      if (nextPhaseType === 'done') {
+        soundEnd();
+        pause();
+      }
+    }
+  }
+
+  updateUI();
+}
+
+function startStop() {
+  if (state.running) {
+    pause();
+  } else {
+    start();
+  }
+}
+
+function start() {
+  if (sequence[state.phaseIdx].type === 'done') return;
+  // AudioContext beim ersten User-Interaktions-Event entsperren
+  try { getAudioCtx().resume(); } catch(e) {}
+  state.running = true;
+  state.interval = setInterval(tick, 1000);
+  document.getElementById('btn-startstop').textContent = '⏸ Pause';
+  updateUI();
+}
+
+function pause() {
+  state.running = false;
+  clearInterval(state.interval);
+  document.getElementById('btn-startstop').textContent = '▶ Start';
+}
+
+function nextPhase() {
+  if (state.phaseIdx < sequence.length - 1) {
+    state.phaseIdx++;
+    state.phaseRemaining = sequence[state.phaseIdx].duration;
+    updateUI();
+  }
+}
+
+function resetTimer() {
+  pause();
+  state.phaseIdx = 0;
+  state.phaseRemaining = sequence[0].duration;
+  state.totalElapsed = 0;
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('timer-display').textContent = '00:00';
+  document.getElementById('timer-display').classList.remove('warning', 'urgent');
+  document.getElementById('timer-phase').innerHTML = '<strong>Bereit</strong> — Starte wenn du bereit bist';
+  document.getElementById('total-elapsed').textContent = '00:00';
+  document.getElementById('info-ex').textContent = '—';
+  document.getElementById('info-round').textContent = '—';
+  document.getElementById('info-phase').textContent = '—';
+  highlightExercise(-1);
+}
+
+// ─── Accordion ───────────────────────────────────────────────────────────────
+function toggle(el) {
+  el.classList.toggle('open');
+}
+
+// Init
+updateUI();
+resetTimer();
+</script>
+</body>
+</html>
